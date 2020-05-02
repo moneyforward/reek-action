@@ -22,11 +22,11 @@ export default class Analyzer extends StaticCodeAnalyzer {
     super(Analyzer.command, options.concat(['-f', 'json']), undefined, 3, undefined, 'Reek', exitStatus => exitStatus === 0 || exitStatus === 2);
   }
 
-  async prepare(): Promise<unknown> {
+  protected async prepare(): Promise<unknown> {
     return tool.installGem(true, Analyzer.command);
   }
 
-  createTransformStreams(): Transformers {
+  protected createTransformStreams(): Transformers {
     const buffers: Buffer[] = [];
     const transformers = [
       new stream.Transform({
