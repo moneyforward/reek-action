@@ -1,6 +1,7 @@
 import stream from 'stream';
 import util from 'util';
-import { StaticCodeAnalyzer, Transformers, tool } from '@moneyforward/sca-action-core';
+import StaticCodeAnalyzer, { installer } from '@moneyforward/sca-action-core';
+import { transform } from '@moneyforward/stream-util';
 
 const debug = util.debuglog('reek-action');
 
@@ -19,24 +20,24 @@ export default class Analyzer extends StaticCodeAnalyzer {
   private static readonly command = 'reek';
 
   constructor(options: string[] = []) {
-    super(Analyzer.command, options.concat(['-f', 'json']), undefined, 3, undefined, 'Reek', exitStatus => exitStatus === 0 || exitStatus === 2);
+    super(Analyzer.command, options.concat(['-f', 'json']), undefined, exitStatus => exitStatus === 0 || exitStatus === 2, undefined, 'Reek');
   }
 
-  protected async prepare(): Promise<unknown> {
-    return tool.installGem(true, Analyzer.command);
+  protected async prepare(): Promise<void> {
+    console.log(`::group::Installing gems...`);
+    try {
+      await new installer.RubyGemsInstaller(true).execute([Analyzer.command]);
+    } finally {
+      console.log(`::endgroup::`)
+    }
   }
 
-  protected createTransformStreams(): Transformers {
-    const buffers: Buffer[] = [];
-    const transformers = [
+  protected createTransformStreams(): stream.Transform[] {
+    return [
+      new transform.JSON(),
       new stream.Transform({
-        readableObjectMode: true,
-        transform: function (buffer, _encoding, done): void {
-          buffers.push(buffer);
-          done();
-        },
-        flush: function (done): void {
-          const result: Result = JSON.parse(Buffer.concat(buffers).toString());
+        objectMode: true,
+        transform: function (result: Result, encoding, done): void {
           debug(`Detected %d problem(s).`, result.length);
           for (const smell of result) for (const line of smell.lines) this.push({
             file: smell.source,
@@ -51,7 +52,5 @@ export default class Analyzer extends StaticCodeAnalyzer {
         }
       })
     ];
-    transformers.reduce((prev, next) => prev.pipe(next));
-    return [transformers[0], transformers[transformers.length - 1]];
   }
 }

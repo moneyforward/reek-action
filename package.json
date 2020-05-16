@@ -26,7 +26,8 @@
   },
   "homepage": "https://github.com/moneyforward/reek-action#readme",
   "dependencies": {
-    "@moneyforward/sca-action-core": "0.0.13"
+    "@moneyforward/sca-action-core": "^0.1.9",
+    "@moneyforward/stream-util": "0.0.2"
   },
   "devDependencies": {
     "@types/chai": "^4.2.11",
