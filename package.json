@@ -1,6 +1,6 @@
 {
   "name": "reek-action",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Analyze code statically using Reek in Github actions",
   "main": "dist/index.js",
   "scripts": {
